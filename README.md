@@ -1,5 +1,5 @@
 # circadian_hue_sync
-Python script designed to by run in pyscript on Home Assistant for use with Circadian Lighting Integration.
+Python script designed to be run in pyscript on Home Assistant for use with Circadian Lighting Integration.
 
 Script will automatically create a scene named 'circadian' in every room on your Hue Bridge. From there, it will keep this scene sync'd with the values provided by Circadian Lightings Sensor and Switch. 
 

@@ -7,9 +7,9 @@ In Hue, these scenes can then be associated with a physical light switch (Hue, F
 
 ## Installation 
 ### Prerequisites
-- (Home Assistant Phillips Hue Integration)[https://www.home-assistant.io/integrations/hue/] needs to be installed and configured 
-- (Home Assistant Community Store (HACS))[https://hacs.xyz/] needs to be installed
-- via HACS, both the (pyscript custom componenet)[https://hacs-pyscript.readthedocs.io/en/latest/installation.html#option-1-hacs] and the (Circadian Lighting custom componenet)[https://github.com/claytonjn/hass-circadian_lighting] need to be installed and configured. 
+- [Home Assistant Phillips Hue Integration](https://www.home-assistant.io/integrations/hue/) needs to be installed and configured 
+- [Home Assistant Community Store (HACS)](https://hacs.xyz/) needs to be installed
+- via HACS, both the [pyscript custom componenet](https://hacs-pyscript.readthedocs.io/en/latest/installation.html#option-1-hacs) and the [Circadian Lighting custom componenet](https://github.com/claytonjn/hass-circadian_lighting) need to be installed and configured. 
 
 note: Pyscript needs to be configured to to use hass global variables for these scripts to function
 

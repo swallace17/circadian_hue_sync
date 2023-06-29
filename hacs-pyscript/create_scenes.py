@@ -1,9 +1,7 @@
+#Create Circadian Scenes
+##This script is designed to be run as a Home Assistant Service via the pyscript hacs integration. It will be run automatically by pyscript upon install, and is designed to be run again automatically via a Home Assistant Automation whenever a new room is created. 
 import requests
 import json
-
-#Variables
-scenes_per_second = 5
-delay = 1.0 / scenes_per_second
 
 #Get hue_api_key and hue_bridge_ip
 @pyscript_executor
@@ -40,10 +38,11 @@ def get_colortemp():
     if colortemp_kelvin is None:
         raise ValueError(f'colortemp attribute not found for entity {entity_id}')
 
-    # Convert Kelvin to Mireds (Phillips Hue uses Mireds)
-    colortemp= 1000000 / colortemp_kelvin
+    # Convert Kelvin to Mireds (Phillips Hue uses Mireds), round it and convert to integer
+    colortemp= int(round(1000000 / colortemp_kelvin))
 
     return colortemp
+
 
 #Get brightness from Circadian Lighting sensor
 def get_brightness():
@@ -87,22 +86,6 @@ def get_scenes(hue_api_key, hue_bridge_ip):
     json_payload = response.json()
     
     return json_payload
-
-#Generate json of all scenes named Circadian
-@pyscript_executor
-def get_circadian_scenes(hue_api_key, hue_bridge_ip):
-    url = f"https://{hue_bridge_ip}/clip/v2/resource/scene"
-    headers = {'hue-application-key': hue_api_key}
-    response = requests.get(url, headers=headers)
-
-    # Raises an HTTPError if the response status was unsuccessful
-    response.raise_for_status()
-
-    json_obj = response.json()
-    new_data = [entry for entry in json_obj["data"] if entry["metadata"]["name"] == "circadian"]
-    json_obj["data"] = new_data
-
-    return json_obj
 
 #Get Devices Function
 @pyscript_executor
@@ -154,25 +137,6 @@ def convert_deviceRIDs_to_lightRIDs(room, hue_devices_json):
 
     # Return the list of light rids
     return light_rids
-
-#Generate list of light RIDs associated with a given a Hue Scene ID
-def extract_lightRIDs_from_scene(scene_id, hue_scenes_json):
-    # List to store the light rids
-    light_rids = []
-
-    # Find the scene in the scenes json
-    for scene in hue_scenes_json['data']:
-        if scene['id'] == scene_id:
-            # For each action in the scene
-            for action in scene['actions']:
-                # If the target is a light
-                if action['target']['rtype'] == 'light':
-                    # Add the light rid to the list
-                    light_rids.append(action['target']['rid'])
-
-    # Return the list of light rids
-    return light_rids
-
 
 #Create circadian Scenes Function
     #given a room, list of light RIDs, an API key, bridge IP, brightness value, and colortemp
@@ -242,58 +206,9 @@ def create_circadian_scene(room, light_rids, hue_api_key, hue_bridge_ip, brightn
     # Return the response
     return response.text
 
-#Update circadian scenes
-@pyscript_executor
-def sync_circadian_scenes(scene_id, light_rids, hue_api_key, hue_bridge_ip, brightness, color_temp):
-    # Base URL for the API
-    url = f"https://{hue_bridge_ip}/clip/v2/resource/scene/{scene_id}"
 
-    # Base action dictionary that will be used for each light
-    base_action = {
-        "action": {
-            "dimming": {
-                "brightness": brightness
-            },
-            "color_temperature": {
-                "mirek": color_temp
-            }
-        }
-    }
-    
-    # Create an action for each light rid
-    actions = []
-    for rid in light_rids:
-        # Copy the base action
-        action = base_action.copy()
-        # Set the target rid
-        action["target"] = {
-            "rid": rid,
-            "rtype": "light"
-        }
-        # Add the action to the list
-        actions.append(action)
-    
-    # Create the payload
-    payload = json.dumps({
-        "type": "scene",
-        "actions": actions,
-    })
-
-    # Headers for the request
-    headers = {
-        'hue-application-key': hue_api_key,
-        'Content-Type': 'application/json'
-    }
-
-    # Send the request
-    response = requests.put(url, headers=headers, data=payload, verify=False)
-
-    # Return the response
-    return response.text
-
-
-@time_trigger('startup')
-def start():
+@event_trigger('area_registry_updated')
+def start(**kwargs):
     #Initiate variables & pull needed json bundles from Hue Bridge
     hue_bridge_ip, hue_api_key = get_hue_gateway_and_key()
     colortemp = get_colortemp()
@@ -302,6 +217,8 @@ def start():
     hue_scenes_json = get_scenes(hue_api_key, hue_bridge_ip)
     hue_devices_json = get_devices(hue_api_key, hue_bridge_ip)
     filtered_rooms = filter_rooms(hue_rooms_json, hue_scenes_json)
+    scenes_per_second = 5
+    delay = 1.0 / scenes_per_second
     
     #Create Hue Scenes if they do not already exist
     for room in filtered_rooms:
@@ -309,13 +226,3 @@ def start():
         response = create_circadian_scene(room, light_rids, hue_api_key, hue_bridge_ip, brightness, colortemp)
         log.info(response)
         task.sleep(delay)
-
-    #Initialize Circadian scenes variable (fresh list of scenes after circadian scenes may have been created)
-    circadian_scenes_json = get_circadian_scenes(hue_api_key, hue_bridge_ip)
-    print(circadian_scenes_json)
-
-    #Update Circadian scenes to latest value from Circadian Lighting
-
-
-
-    

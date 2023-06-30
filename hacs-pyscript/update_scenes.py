@@ -108,6 +108,9 @@ def sync_circadian_scenes(scene_id, light_rids, hue_api_key, hue_bridge_ip, brig
     # Base action dictionary that will be used for each light
     base_action = {
         "action": {
+            "on": {
+                "on": True
+            },
             "dimming": {
                 "brightness": brightness
             },

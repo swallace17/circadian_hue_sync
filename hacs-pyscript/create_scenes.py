@@ -109,8 +109,10 @@ def filter_rooms(hue_rooms_json, hue_scenes_json):
     hue_scenes_circadian_json = [scene for scene in hue_scenes_json['data'] if scene['metadata']['name'] == 'circadian']
 
     # Step 2: Filter rooms list by removing any rooms found in step 1 which already have a scene named circadian
-    group_rids = {scene['group']['rid'] for scene in hue_scenes_circadian_json} #creates array of rid values which correspond to rooms with a scene named circadian
-    filtered_rooms = [room for room in hue_rooms_json['data'] if room['id'] not in group_rids]
+    group_rids = {scene['group']['rid'] for scene in hue_scenes_circadian_json} # creates array of rid values which correspond to rooms with a scene named circadian
+
+    # Step 3: Filter rooms list by removing any rooms without devices
+    filtered_rooms = [room for room in hue_rooms_json['data'] if room['id'] not in group_rids and len(room['children']) > 0]
 
     return filtered_rooms
 

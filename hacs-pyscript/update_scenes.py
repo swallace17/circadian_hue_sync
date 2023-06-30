@@ -55,7 +55,11 @@ def get_brightness():
     if brightness is None:
         raise ValueError(f'brightness attribute not found for entity {entity_id}')
 
+    # Round the brightness to the nearest whole number and convert to int
+    brightness = int(round(brightness))
+
     return brightness
+
 
 #Generate json of all scenes named Circadian
 @pyscript_executor
@@ -82,11 +86,15 @@ def extract_lightRIDs_from_scene(scene_id, hue_scenes_json):
     for scene in hue_scenes_json['data']:
         if scene['id'] == scene_id:
             # For each action in the scene
-            for action in scene['actions']:
-                # If the target is a light
-                if action['target']['rtype'] == 'light':
-                    # Add the light rid to the list
-                    light_rids.append(action['target']['rid'])
+            if 'actions' in scene:  # Added this line
+                for action in scene['actions']:
+                    # If the target is a light
+                    if action['target']['rtype'] == 'light':
+                        # Add the light rid to the list
+                        light_rids.append(action['target']['rid'])
+            else:  # Added this line
+                # Log or print the scene when 'actions' is missing
+                log.info(f"'actions' key missing in scene: {scene}")
 
     # Return the list of light rids
     return light_rids
